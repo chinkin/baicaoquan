@@ -66,7 +66,7 @@ const store = new Vuex.Store({
 
 		getProduct({ commit }, oParam) {
 			if (!oParam.id || oParam.id === '') return;
-			oParam.expands = 'productdetails,productspecs';
+			oParam.expands = 'details,specs,inventories';
 			return new Promise((resolve, reject) => {
 				service.getProduct(oParam, oProduct => {
 					resolve(oProduct);

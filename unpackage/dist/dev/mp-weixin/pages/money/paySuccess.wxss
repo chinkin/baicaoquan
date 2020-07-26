@@ -51,8 +51,8 @@
   border-radius: 10rpx;
 }
 .mix-btn.hollow {
-    background: #fff;
-    color: #303133;
-    border: 1px solid #ccc;
+  background: #fff;
+  color: #303133;
+  border: 1px solid #ccc;
 }
 
