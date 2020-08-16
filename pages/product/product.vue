@@ -42,7 +42,7 @@
 		
 		<view class="c-list">
 			<view class="c-row b-b" @click="toggleSpec">
-				<text class="tit">购买类型</text>
+				<text class="tit">购买规格</text>
 				<view class="con">
 					<text class="selected-text" v-for="(sItem, sIndex) in aSpecSelected" :key="sIndex">
 						{{sItem.value}}
@@ -100,7 +100,7 @@
 			</view>
 <!--			<rich-text :nodes="desc"></rich-text>-->
 			<div style="d-content">
-				<div v-for="(item, index) in oProduct.productdetails" :key="index">
+				<div v-for="(item, index) in oProduct.details" :key="index">
 					<img :src="item.imageurl | generateUrl()"/>
 				</div>
 			</div>
@@ -148,13 +148,9 @@
 				<view v-for="(item, index) in aSpecs" :key="index" class="attr-list">
 					<text>{{item.specname}}</text>
 					<view class="item-list">
-						<text 
-							v-for="(childItem, childIndex) in item.specs" 
-							v-if="childItem.pid === item.id"
-							:key="childIndex" class="tit"
-							:class="{selected: childItem.selected}"
-							@click="selectSpec(childIndex, index)"
-						>
+						<text v-for="(childItem, childIndex) in item.specs" v-if="childItem.pid === item.id"
+							  :key="childIndex" class="tit" :class="{selected: childItem.selected}"
+							  @click="selectSpec(childIndex, index)">
 							{{childItem.value}}
 						</text>
 					</view>
@@ -279,17 +275,17 @@
 					this.oProduct.discount = (oProduct.baseprice / oProduct.marketprice * 10).toFixed(1);
 				this.dPrice = oProduct.baseprice;
 				this.iInventory = oProduct.inventory;
-				if (!oProduct.productdetails) this.oProduct.productdetails[0].imageurl = oProduct.image1url;
+				if (!oProduct.details) this.oProduct.details[0].imageurl = oProduct.image1url;
 			});
 
 			//整理规格
-			if (this.oProduct.productspecs && this.oProduct.productspecs.length > 0) {
+			if (this.oProduct.specs && this.oProduct.specs.length > 0) {
 				let i = 0;
-				let sSpecName = this.oProduct.productspecs[0].specname;
+				let sSpecName = this.oProduct.specs[0].specname;
 				this.aSpecs[i] = {};
 				this.aSpecs[i].specname = sSpecName;
 				this.aSpecs[i].specs = [];
-				for (let oSpec of this.oProduct.productspecs) {
+				for (let oSpec of this.oProduct.specs) {
 					if (oSpec.specname !== sSpecName) {
 						i++;
 						sSpecName = oSpec.specname;
