@@ -42,7 +42,7 @@
 		
 		<view class="c-list">
 			<view class="c-row b-b" @click="toggleSpec">
-				<text class="tit">购买规格</text>
+				<text class="tit">选择规格</text>
 				<view class="con">
 					<text class="selected-text" v-for="(sItem, sIndex) in aSpecSelected" :key="sIndex">
 						{{sItem.value}}
@@ -149,8 +149,8 @@
 					<text>{{item.specname}}</text>
 					<view class="item-list">
 						<text v-for="(childItem, childIndex) in item.specs" v-if="childItem.pid === item.id"
-							  :key="childIndex" class="tit" :class="{selected: childItem.selected}"
-							  @click="selectSpec(childIndex, index)">
+							  :key="childIndex" class="tit" :class="{diabled: childItem.diabled, selected: childItem.selected}"
+							  @click="!childItem.diabled && selectSpec(childIndex, index)">
 							{{childItem.value}}
 						</text>
 					</view>
@@ -184,6 +184,7 @@
 				aSpecs: [],
 				sSpecClass: 'none',
 				aSpecSelected: [],
+				aInventories: []
 /*
 				desc: `
 					<div style="width:100%">
@@ -278,21 +279,53 @@
 				if (!oProduct.details) this.oProduct.details[0].imageurl = oProduct.image1url;
 			});
 
-			//整理规格
+			//库存
+			if (this.oProduct.inventories && this.oProduct.inventories.length > 0) {
+				let oInventory = {aSpecs: [], iInventory: 0};
+				let iCountInv = 0;
+				for (let oInv of this.oProduct.inventories) {
+					if (oInv.inventory > 0) {
+						oInventory.aSpecs = oInv.productspecs.split(",");
+						oInventory.iInventory = oInv.inventory;
+						this.aInventories.push(oInventory);
+						iCountInv += oInv.inventory;
+					}
+				}
+				this.iInventory = iCountInv === 0 ? this.iInventory : iCountInv;
+			}
+
+			//规格
 			if (this.oProduct.specs && this.oProduct.specs.length > 0) {
 				let i = 0;
-				let sSpecName = this.oProduct.specs[0].specname;
+				let iSpecID = this.oProduct.specs[0].specid;
 				this.aSpecs[i] = {};
-				this.aSpecs[i].specname = sSpecName;
+				this.aSpecs[i].specid = iSpecID;
+				this.aSpecs[i].specname = this.oProduct.specs[0].specname;
 				this.aSpecs[i].specs = [];
 				for (let oSpec of this.oProduct.specs) {
-					if (oSpec.specname !== sSpecName) {
+					if (oSpec.specid !== iSpecID) {
 						i++;
-						sSpecName = oSpec.specname;
+						iSpecID = oSpec.specid;
 						this.aSpecs[i] = {};
-						this.aSpecs[i].specname = sSpecName;
+						this.aSpecs[i].specid = iSpecID;
+						this.aSpecs[i].specname = oSpec.specname;
 						this.aSpecs[i].specs = [];
 					}
+					let bHasInv = true;
+					if (this.aInventories.length > 0) {
+						bHasInv = false;
+						for (let oInv of this.aInventories) {
+							for (let iSpec of oInv.aSpecs) {
+								if (iSpec === oSpec.id) {
+									bHasInv = true;
+									break;
+								}
+							}
+							if (bHasInv) break;
+						}
+					}
+					if (bHasInv) this.$set(oSpec, 'disabled', false);
+							else this.$set(oSpec, 'disabled', true);
 					this.$set(oSpec, 'selected', false);
 					this.aSpecs[i].specs.push(oSpec);
 				}
@@ -306,6 +339,8 @@
 //					}
 //				}
 //			})
+
+			//分享
 			this.aShareList = await this.$api.json('aShareList');
 		},
 		methods:{
@@ -349,7 +384,6 @@
 				} else {
 					this.oProduct.discount = 0;
 				}
-				
 			},
 			//分享
 			share(){
@@ -702,6 +736,10 @@
 				padding: 0 20upx;
 				font-size: $font-base;
 				color: $font-color-dark;
+			}
+			.diabled{
+				background: #fbebee;
+				color: $uni-color-disabled;
 			}
 			.selected{
 				background: #fbebee;
