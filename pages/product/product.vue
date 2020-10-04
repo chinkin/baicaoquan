@@ -387,8 +387,8 @@
 				//this.aSpecSelected = [];
 				this.aSpecs.forEach(aSpec=>{
 					aSpec.specs.forEach(item=>{
-						if (item.selected === true) { 
-							//this.aSpecSelected.push(item); 
+						if (item.selected === true) {
+							//this.aSpecSelected.push(item);
 							this.dPrice = item.price ? this.dPrice + item.price : this.dPrice;
 							//this.iInventory = item.inventory && item.inventory < this.iInventory ? item.inventory : this.iInventory;
 						}
@@ -407,6 +407,7 @@
 										}
 									}
 								}
+								iCountInv = iCountInv + oInv.inventory
 								if (bHasInv) break;
 							}
 						}
