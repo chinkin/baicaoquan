@@ -136,7 +136,7 @@
 					<image :src="aImgList[0] | generateUrl()"></image>
 					<view class="right">
 						<text class="price">¥{{dPrice}}</text>
-						<text class="stock">库存：{{iInventory}}件</text>
+						<text class="stock">库存：{{iDetailInv}}件</text>
 						<view class="selected">
 							已选：
 							<text class="selected-text" v-for="(sItem, sIndex) in aSpecSelected" :key="sIndex">
@@ -149,8 +149,8 @@
 					<text>{{item.specname}}</text>
 					<view class="item-list">
 						<text v-for="(childItem, childIndex) in item.specs" v-if="childItem.pid === item.id"
-							  :key="childIndex" class="tit" :class="{diabled: childItem.diabled, selected: childItem.selected}"
-							  @click="!childItem.diabled && selectSpec(childIndex, index)">
+							  :key="childIndex" class="tit" :class="{disabled: childItem.disabled, selected: childItem.selected}"
+							  @click="!childItem.disabled && selectSpec(childIndex, index)">
 							{{childItem.value}}
 						</text>
 					</view>
@@ -178,6 +178,7 @@
 				oProduct: {},
 				dPrice: 0.0,
 				iInventory: 0,
+				iDetailInv: 0,
 				bFavorite: true,
 				aShareList: [],
 				aImgList: [],
@@ -257,12 +258,13 @@
 		},
 		async onLoad(options){
 
-			//接收传值,id里面放的是标题，因为测试数据并没写id 
+			//接收传值, id里面放的是标题, 因为测试数据并没写id 
 			let id = options.id;
 //			if(id){
 //				this.$api.msg(`点击了${id}`);
 //			}
 
+			//let that = this; //for debug
 			await this.$store.dispatch('getProduct', {
 				"id": id
 			}).then((oProduct) => {
@@ -276,14 +278,14 @@
 					this.oProduct.discount = (oProduct.baseprice / oProduct.marketprice * 10).toFixed(1);
 				this.dPrice = oProduct.baseprice;
 				this.iInventory = oProduct.inventory;
-				if (!oProduct.details) this.oProduct.details[0].imageurl = oProduct.image1url;
+				if (!oProduct.details) this.oProduct.details[0].imageurl = this.aImgList[0];
 			});
 
 			//库存
 			if (this.oProduct.inventories && this.oProduct.inventories.length > 0) {
-				let oInventory = {aSpecs: [], iInventory: 0};
 				let iCountInv = 0;
 				for (let oInv of this.oProduct.inventories) {
+					let oInventory = {aSpecs: [], iInventory: 0};
 					if (oInv.inventory > 0) {
 						oInventory.aSpecs = oInv.productspecs.split(",");
 						oInventory.iInventory = oInv.inventory;
@@ -292,6 +294,7 @@
 					}
 				}
 				this.iInventory = iCountInv === 0 ? this.iInventory : iCountInv;
+				this.iDetailInv = this.iInventory;
 			}
 
 			//规格
@@ -313,10 +316,10 @@
 					}
 					let bHasInv = true;
 					if (this.aInventories.length > 0) {
-						bHasInv = false;
 						for (let oInv of this.aInventories) {
-							for (let iSpec of oInv.aSpecs) {
-								if (iSpec === oSpec.id) {
+							for (let sSpecId of oInv.aSpecs) {
+								bHasInv = false;
+								if (sSpecId == oSpec.id) {
 									bHasInv = true;
 									break;
 								}
@@ -331,8 +334,8 @@
 				}
 			}
 //			this.specList.forEach(item=>{
-//				for(let cItem of this.specChildList){
-//					if(cItem.pid === item.id){
+//				for (let cItem of this.specChildList) {
+//					if (cItem.pid === item.id) {
 //						this.$set(cItem, 'selected', true);
 //						this.aSpecSelected.push(cItem);
 //						break; //forEach不能使用break
@@ -346,39 +349,72 @@
 		methods:{
 			//规格弹窗开关
 			toggleSpec() {
-				if(this.sSpecClass === 'show'){
+				if (this.sSpecClass === 'show'){
 					this.sSpecClass = 'hide';
 					setTimeout(() => {
 						this.sSpecClass = 'none';
 					}, 250);
-				}else if(this.sSpecClass === 'none'){
+				} else if (this.sSpecClass === 'none') {
 					this.sSpecClass = 'show';
 				}
 			},
 			//选择规格
 			selectSpec(iValueIndex, iSpecIndex){
-				let list = this.aSpecs[iSpecIndex].specs;
-				list.forEach(item=>{
-					if(item.selected === true){
-						this.$set(item, 'selected', false);
+				let aList = this.aSpecs[iSpecIndex].specs;
+				let i = 0;
+				for (i; i < aList.length; i++){
+					if (aList[i].selected === true) {
+						this.$set(aList[i], 'selected', false);
+						for (let j = 0; j < this.aSpecSelected.length; j++) {
+							if (aList[i].id === this.aSpecSelected[j].id) {
+								this.aSpecSelected.splice(j, 1);
+								break;
+							}
+						}
+						break; //单选
 					}
-				})
+				}
+				if (i !== iValueIndex) {
+					this.$set(aList[iValueIndex], 'selected', true);
+					this.aSpecSelected.push(aList[iValueIndex]);
+				}
 
-				this.$set(list[iValueIndex], 'selected', true);
 				this.dPrice = this.oProduct.baseprice;
-				this.iInventory = this.oProduct.inventory;
-
-				//存储已选择
-				this.aSpecSelected = [];
+				//this.iInventory = this.oProduct.inventory;
+				let iCountInv = 0;
+				let bHasInv = true;
+				//重算断货
+				//this.aSpecSelected = [];
 				this.aSpecs.forEach(aSpec=>{
-					aSpec.specs.forEach(item=>{ 
-						if(item.selected === true){ 
-							this.aSpecSelected.push(item); 
+					aSpec.specs.forEach(item=>{
+						if (item.selected === true) { 
+							//this.aSpecSelected.push(item); 
 							this.dPrice = item.price ? this.dPrice + item.price : this.dPrice;
-							this.iInventory = item.inventory && item.inventory < this.iInventory ? item.inventory : this.iInventory;
-						} 
+							//this.iInventory = item.inventory && item.inventory < this.iInventory ? item.inventory : this.iInventory;
+						}
+
+						if (this.aInventories.length > 0) {
+							for (let oInv of this.aInventories) {
+								bHasInv = false;
+								if (this.aSpecSelected.length > 0 && this.aSpecSelected.length < oInv.aSpecs.length) {
+									for (let oSelectSpec of this.aSpecSelected) {
+									}
+								} else {
+									for (let sSpecId of oInv.aSpecs) {
+										if (sSpecId == item.id) {
+											bHasInv = true;
+											break;
+										}
+									}
+								}
+								if (bHasInv) break;
+							}
+						}
+						if (bHasInv) this.$set(item, 'disabled', false);
+								else this.$set(item, 'disabled', true);
 					})
 				})
+				this.iDetailInv = iCountInv === 0 ? this.iDetailInv : iCountInv;
 				if (this.oProduct.marketprice && this.oProduct.marketprice !== 0 && this.dPrice !== this.oProduct.marketprice) {
 					this.oProduct.discount = (this.dPrice / this.oProduct.marketprice * 10).toFixed(1);
 				} else {
@@ -643,7 +679,7 @@
 			}
 		}
 	}
-	/*  详情 */
+	/* 详情 */
 	.detail-desc{
 		background: #fff;
 		margin-top: 16upx;
@@ -727,7 +763,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				background: #eee;
+				background: #eeeeee;
 				margin-right: 20upx;
 				margin-bottom: 20upx;
 				border-radius: 100upx;
@@ -737,12 +773,12 @@
 				font-size: $font-base;
 				color: $font-color-dark;
 			}
-			.diabled{
+			.disabled{
 				background: #fbebee;
 				color: $uni-color-disabled;
 			}
 			.selected{
-				background: #fbebee;
+				background: #dddddd;
 				color: $uni-color-primary;
 			}
 		}
