@@ -287,7 +287,7 @@
 				for (let oInv of this.oProduct.inventories) {
 					let oInventory = {aSpecs: [], iInventory: 0};
 					if (oInv.inventory > 0) {
-						oInventory.aSpecs = oInv.productspecs.split(",");
+						oInventory.aSpecs = oInv.productspecs.split(",").sort();
 						oInventory.iInventory = oInv.inventory;
 						this.aInventories.push(oInventory);
 						iCountInv += oInv.inventory;
@@ -327,8 +327,13 @@
 							if (bHasInv) break;
 						}
 					}
-					if (bHasInv) this.$set(oSpec, 'disabled', false);
-							else this.$set(oSpec, 'disabled', true);
+					if (bHasInv) {
+						this.$set(oSpec, 'disabled', false);
+						this.$set(oSpec, 'hasinventory', true);
+					} else {
+						this.$set(oSpec, 'disabled', true);
+						this.$set(oSpec, 'hasinventory', false);
+					}
 					this.$set(oSpec, 'selected', false);
 					this.aSpecs[i].specs.push(oSpec);
 				}
@@ -371,56 +376,76 @@
 								break;
 							}
 						}
+						this.dPrice = this.dPrice - aList[i].price;
 						break; //单选
 					}
 				}
 				if (i !== iValueIndex) {
 					this.$set(aList[iValueIndex], 'selected', true);
+					this.dPrice = this.dPrice + aList[iValueIndex].price;
 					this.aSpecSelected.push(aList[iValueIndex]);
 				}
-
-				this.dPrice = this.oProduct.baseprice;
-				//this.iInventory = this.oProduct.inventory;
-				let iCountInv = 0;
-				let bHasInv = true;
-				//重算断货
-				//this.aSpecSelected = [];
-				this.aSpecs.forEach(aSpec=>{
-					aSpec.specs.forEach(item=>{
-						if (item.selected === true) {
-							//this.aSpecSelected.push(item);
-							this.dPrice = item.price ? this.dPrice + item.price : this.dPrice;
-							//this.iInventory = item.inventory && item.inventory < this.iInventory ? item.inventory : this.iInventory;
-						}
-
-						if (this.aInventories.length > 0) {
-							for (let oInv of this.aInventories) {
-								bHasInv = false;
-								if (this.aSpecSelected.length > 0 && this.aSpecSelected.length < oInv.aSpecs.length) {
-									for (let oSelectSpec of this.aSpecSelected) {
-									}
-								} else {
-									for (let sSpecId of oInv.aSpecs) {
-										if (sSpecId == item.id) {
-											bHasInv = true;
-											break;
-										}
-									}
-								}
-								iCountInv = iCountInv + oInv.inventory
-								if (bHasInv) break;
-							}
-						}
-						if (bHasInv) this.$set(item, 'disabled', false);
-								else this.$set(item, 'disabled', true);
-					})
-				})
-				this.iDetailInv = iCountInv === 0 ? this.iDetailInv : iCountInv;
 				if (this.oProduct.marketprice && this.oProduct.marketprice !== 0 && this.dPrice !== this.oProduct.marketprice) {
 					this.oProduct.discount = (this.dPrice / this.oProduct.marketprice * 10).toFixed(1);
 				} else {
 					this.oProduct.discount = 0;
 				}
+
+				let iCountInv = 0;
+				//按选择规格重算库存
+				if (this.aInventories.length > 0) {
+					if (this.aSpecSelected.length === 0) {
+						this.aSpecs.forEach(aSpec=>{
+							aSpec.specs.forEach(item=>{
+								if (item.hasinventory === true) {
+									this.$set(item, 'disabled', false);
+								}
+							})
+						})
+						for (let oInv of this.aInventories) {
+							iCountInv = iCountInv + oInv.iInventory;
+						}
+					} else {
+						let iSelectedInv = [];
+						let bHasInv = true;
+						i = 0;
+						for (let oInv of this.aInventories) {
+							let bHasInv = true;
+							for (let oSpec of this.aSpecSelected) {
+								if (!oInv.aSpecs.includes(oSpec.id.toString())) {
+									bHasInv = false;
+									break;
+								}
+							}
+							if (bHasInv) {
+								iSelectedInv.push(i);
+								iCountInv = iCountInv + oInv.iInventory;
+							}
+							i++;
+						}
+						this.aSpecs.forEach(aSpec=>{
+							aSpec.specs.forEach(item=>{
+								if (item.hasinventory === true) {
+									if (item.selected !== true) {
+										bHasInv = false;
+										for (let iIndex of iSelectedInv) {
+											for (let sSpecId of this.aInventories[iIndex].aSpecs) {
+												if (item.id == sSpecId) {
+													bHasInv = true;
+													break;
+												}
+											}
+											if (bHasInv) break;
+										}
+										if (bHasInv) this.$set(item, 'disabled', false);
+										else this.$set(item, 'disabled', true);
+									}
+								}
+							})
+						})
+					}
+				}
+				this.iDetailInv = iCountInv === 0 ? this.iDetailInv : iCountInv;
 			},
 			//分享
 			share(){

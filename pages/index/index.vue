@@ -2,9 +2,11 @@
 	<view class="container">
 		<!-- 小程序头部兼容 -->
 		<!-- #ifdef MP -->
+		<!--
 		<view class="mp-search-box">
 			<input class="ser-input" type="text" value="输入关键字搜索" disabled />
 		</view>
+		-->
 		<!-- #endif -->
 		
 		<!-- 头部轮播 -->
@@ -33,11 +35,88 @@
 			</view>
 		</view>
 		
+		<!-- 热卖 -->
+		<view class="hot-floor">
+			<view class="floor-img-box">
+				<image class="floor-img" :src="'/book/media/index/title_hot.jpg' | generateUrl()" mode="scaleToFill"></image>
+			</view>
+			<scroll-view class="floor-list" scroll-x>
+				<view class="scoll-wrapper">
+					<view
+						v-for="(item, index) in aProdList" :key="index"
+						class="floor-item"
+						@click="navToProduct(item)"
+					>
+						<image :src="item.image1url | generateUrl()" mode="aspectFill"></image>
+						<text class="title clamp">{{item.name}}</text>
+						<text class="price">￥{{item.baseprice}}</text>
+					</view>
+					<view class="more">
+						<text>查看全部</text>
+						<text>More+</text>
+					</view>
+				</view>
+			</scroll-view>
+		</view>
+		
+		<!-- 限时特价 -->
+		<view class="hot-floor">
+			<view class="floor-img-box">
+				<image class="floor-img" :src="'/book/media/index/title_bargain.jpg' | generateUrl()" mode="scaleToFill"></image>
+			</view>
+			<swiper class="g-swiper" :duration="500">
+				<swiper-item
+					class="g-swiper-item"
+					v-for="(item, index) in aProdList" :key="index"
+					v-if="index%2 === 0"
+					@click="navToProduct(item)"
+				>
+					<view class="g-item left">
+						<image :src="item.image1url | generateUrl()" mode="aspectFill"></image>
+						<view class="t-box">
+							<text class="title clamp">{{item.name}}</text>
+							<view class="price-box">
+								<text class="price">￥{{item.baseprice}}</text> 
+								<text class="m-price" v-if="item.marketprice && item.marketprice > 0">￥{{item.marketprice}}</text> 
+							</view>
+							
+							<view class="pro-box">
+							  	<view class="progress-box">
+							  		<progress percent="72" activeColor="#fa436a" active stroke-width="6" />
+							  	</view>
+								<text>6人成团</text>
+							</view>
+						</view>
+					</view>
+				</swiper-item>
+			</swiper>
+			<scroll-view class="floor-list" scroll-x>
+				<view class="scoll-wrapper">
+					<view 
+						v-for="(item, index) in aProdList" :key="index"
+						class="floor-item"
+						@click="navToProduct(item)"
+					>
+						<image :src="item.image1url | generateUrl()" mode="aspectFill"></image>
+						<text class="title clamp">{{item.name}}</text>
+						<text class="price">￥{{item.baseprice}}</text>
+					</view>
+					<view class="more">
+						<text>查看全部</text>
+						<text>More+</text>
+					</view>
+				</view>
+			</scroll-view>
+		</view>
+		
+		<!--
 		<view class="ad-1">
 			<image src="/static/temp/ad1.jpg" mode="scaleToFill"></image>
 		</view>
+		-->
 		
 		<!-- 秒杀楼层 -->
+		<!--
 		<view class="seckill-section m-t">
 			<view class="s-header">
 				<image class="s-img" src="/static/temp/secskill-img.jpg" mode="widthFix"></image>
@@ -61,8 +140,10 @@
 				</view>
 			</scroll-view>
 		</view>
+		-->
 		
 		<!-- 团购楼层 -->
+		<!--
 		<view class="f-header m-t">
 			<image src="/static/temp/h1.png"></image>
 			<view class="tit-box">
@@ -117,10 +198,10 @@
 
 			</swiper>
 		</view>
-		
-		
+		-->
 		
 		<!-- 分类推荐楼层 -->
+		<!--
 		<view class="f-header m-t">
 			<image src="/static/temp/h1.png"></image>
 			<view class="tit-box">
@@ -195,6 +276,7 @@
 				</view>
 			</scroll-view>
 		</view>
+		-->
 
 		<!-- 猜你喜欢 -->
 		<view class="f-header m-t">
@@ -645,7 +727,7 @@
 		margin-bottom: 20upx;
 		.floor-img-box {
 			width: 100%;
-			height:320upx;
+			height: 320upx;
 			position:relative;
 			&:after {
 				content: '';
@@ -664,10 +746,10 @@
 		.floor-list {
 			white-space: nowrap;
 			padding: 20upx;
-			padding-right: 50upx;
+			//padding-right: 50upx;
 			border-radius: 6upx;
-			margin-top:-140upx;
-			margin-left: 30upx;
+			margin-top: -240upx;
+			//margin-left: 30upx;
 			background: #fff;
 			box-shadow: 1px 1px 5px rgba(0,0,0,.2);
 			position: relative;
